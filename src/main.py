@@ -15,8 +15,8 @@ OFFSET_CANVAS_Y = 50
 
 WIDTH_EXT = 700
 WIDTH_INN = 650
-HEIGHT_EXT = 400
-HEIGHT_INN = 350
+HEIGHT_EXT = 300
+HEIGHT_INN = 250
 
 
 # Rotates a point counterclockwise by a given angle around a given origin.
