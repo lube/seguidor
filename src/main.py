@@ -2,8 +2,6 @@ import serial
 import time
 import datetime
 import logging
-from pykalman import KalmanFilter
-import numpy as np
 import tkinter as tk
 import threading
 import re
@@ -54,6 +52,25 @@ colors = ["blue", "green", "orange", "red"]
 
 def flip_x(point, center):
     return 2 * center[0] - point[0], point[1]
+
+
+class KalmanFilter:
+    def __init__(self, process_variance, estimated_measurement_variance):
+        self.process_variance = process_variance
+        self.estimated_measurement_variance = estimated_measurement_variance
+        self.posteri_estimate = 0.0
+        self.posteri_error_estimate = 1.0
+
+    def input_latest_noisy_measurement(self, measurement):
+        priori_estimate = self.posteri_estimate
+        priori_error_estimate = self.posteri_error_estimate + self.process_variance
+
+        blending_factor = priori_error_estimate / (priori_error_estimate + self.estimated_measurement_variance)
+        self.posteri_estimate = priori_estimate + blending_factor * (measurement - priori_estimate)
+        self.posteri_error_estimate = (1 - blending_factor) * priori_error_estimate
+
+    def get_latest_estimated_measurement(self):
+        return self.posteri_estimate
 
 
 class UWBVisualizer:
@@ -211,31 +228,6 @@ def init_logger():
                         datefmt='%Y-%m-%d %H:%M:%S')
     logging.info("Starting logging...")
 
-
-def init_kalman_filter(initial_state):
-    # transition_covariance Increasing the process noise covariance will make the filter trust the motion model less
-    # observation_covariance Increasing the observation noise covariance will make the filter trust the measurements
-    # less and relay more on its internal state
-    transition_matrix = np.eye(3)
-    observation_matrix = np.eye(3)
-    initial_state_covariance = np.eye(3)
-    observation_covariance = np.eye(3) * 1
-    transition_covariance = np.eye(3) * 0.1
-
-    kf = KalmanFilter(transition_matrices=transition_matrix,
-                      observation_matrices=observation_matrix,
-                      initial_state_mean=initial_state,
-                      initial_state_covariance=initial_state_covariance,
-                      observation_covariance=observation_covariance,
-                      transition_covariance=transition_covariance)
-    return kf
-
-
-def apply_kalman_filter(kf, data):
-    kf.initial_state_mean, _ = kf.filter_update(kf.initial_state_mean, kf.initial_state_covariance, data)
-    return kf.initial_state_mean
-
-
 def init():
     init_logger()
 
@@ -268,8 +260,9 @@ def init():
     DWM.write("lec\r".encode())
     time.sleep(1)
 
-    initial_state = [0, 0, 0]
-    kf = init_kalman_filter(initial_state)
+    kfx = KalmanFilter(process_variance=1e-4, estimated_measurement_variance=0.1**4)
+    kfy = KalmanFilter(process_variance=1e-4, estimated_measurement_variance=0.1**4)
+    kfz = KalmanFilter(process_variance=1e-4, estimated_measurement_variance=0.1**4)
 
     visualizer = UWBVisualizer()
     visualizer.update_anchor_positions(anchor_positions)
@@ -295,10 +288,12 @@ def init():
                     y_pos = float(parse[4])
                     z_pos = float(parse[5])
 
-                    data = np.array([x_pos, y_pos, z_pos])
-                    filtered_data = apply_kalman_filter(kf, data)
-
-                    x_filtered, y_filtered, z_filtered = filtered_data
+                    kfx.input_latest_noisy_measurement(float(x_pos))
+                    x_filtered = kfx.get_latest_estimated_measurement()
+                    kfy.input_latest_noisy_measurement(float(y_pos))
+                    y_filtered = kfy.get_latest_estimated_measurement()
+                    kfz.input_latest_noisy_measurement(float(z_pos))
+                    z_filtered = kfz.get_latest_estimated_measurement()
                     visualizer.update_position(x_filtered, y_filtered, z_filtered)
 
                     log_message = f"({x_filtered:.2f}, {y_filtered:.2f}, {z_filtered:.2f})"
