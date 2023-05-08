@@ -10,7 +10,7 @@ OFFSET_CANVAS_Y = 50
 
 WIDTH_EXT = 700
 WIDTH_INN = 650
-HEIGHT_EXT = 300
+HEIGHT_EXT = 250
 HEIGHT_INN = 250
 
 colors = ["blue", "green", "orange", "red"]
