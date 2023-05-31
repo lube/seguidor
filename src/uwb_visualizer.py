@@ -30,23 +30,23 @@ class UWBVisualizer:
         self.scale = 0
 
     def save_anchor_colors(self):
-        with open("./../anchor_colors.json", "w") as outfile:
+        with open("./anchor_colors.json", "w") as outfile:
             json.dump(self.anchor_colors, outfile)
 
     def save_ui_configs(self):
-        with open("./../ui.json", "w") as outfile:
+        with open("./ui.json", "w") as outfile:
             json.dump([self.offset_x, self.offset_y, self.scale, self.rotation_angle], outfile)
 
     def load_anchor_colors(self):
         try:
-            with open("./../anchor_colors.json", "r") as infile:
+            with open("./anchor_colors.json", "r") as infile:
                 self.anchor_colors = json.load(infile)
         except FileNotFoundError:
             print(f"No previous anchor colors found. Using default colors.")
 
     def load_ui_configs(self):
         try:
-            with open("./../ui.json", "r") as infile:
+            with open("./ui.json", "r") as infile:
                 [self.offset_x, self.offset_y, self.scale, self.rotation_angle] = json.load(infile)
         except FileNotFoundError:
             print(f"No previous ui found. Using default params.")

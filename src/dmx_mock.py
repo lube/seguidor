@@ -1,19 +1,24 @@
-TERMINAL_LOGGING = True
+import logging
+import datetime
+
+TERMINAL_LOGGING = False
+
+
+def log(line):
+    if TERMINAL_LOGGING:
+        print(datetime.datetime.now().strftime("%H:%M:%S"), line)
+    logging.info(line)
 
 
 class MockDMXInterface:
     def __init__(self):
-        if TERMINAL_LOGGING:
-            print("Mock DMX interface initialized")
+        log("Mock DMX interface initialized")
 
     def set_channel(self, channel, value):
-        if TERMINAL_LOGGING:
-            print(f"Sending value {value} to channel {channel}")
+        log(f"Sending value {value} to channel {channel}")
 
     def blackout(self):
-        if TERMINAL_LOGGING:
-            print("blackout")
+        print("blackout")
 
     def render(self):
-        if TERMINAL_LOGGING:
-            print("render")
+        print("render")
